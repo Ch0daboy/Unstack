@@ -3,7 +3,7 @@ import { BookOpen, ChevronRight, Play, Search, RotateCcw, Download, FileText, He
 import { Book, BookChapter, AudiobookData } from '../types';
 import { generateAllContent, generateAllContentWithResearch, convertRomanceHeatLevel } from '../services/contentService';
 import { exportToPDF, exportToEPUB } from '../services/exportService';
-import { generateBookCover, generateBookCoverWithDALLE } from '../services/coverService';
+import { generateBookCover } from '../services/coverService';
 import AudiobookGenerator from './AudiobookGenerator';
 
 interface OutlineViewProps {
@@ -112,25 +112,16 @@ const OutlineView: React.FC<OutlineViewProps> = ({
     onUpdateBook(updatedBook);
   };
 
-  const handleGenerateCover = async (useDALLE: boolean = false) => {
-    let apiKey: string;
-
-    if (useDALLE) {
-      // For DALL-E, we still need OpenAI API key
-      const userApiKey = prompt('Enter your OpenAI API key for DALL-E:');
-      if (!userApiKey) return;
-      apiKey = userApiKey;
-    } else {
-      // For Gemini Imagen, use the existing Gemini API key
-      apiKey = apiKeys.gemini;
+  const handleGenerateCover = async () => {
+    if (!apiKeys.gemini) {
+      alert('Please add your Gemini API key in settings to generate covers.');
+      return;
     }
-    
+
     setIsGeneratingCover(true);
     try {
-      const coverUrl = useDALLE 
-        ? await generateBookCoverWithDALLE(book, apiKey)
-        : await generateBookCover(book, apiKey);
-      
+      const coverUrl = await generateBookCover(book, apiKeys.gemini);
+
       const updatedBook = { ...book, coverUrl };
       onUpdateBook(updatedBook);
       setShowCoverOptions(false);
@@ -243,25 +234,14 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                   </button>
                 ) : (
                   <div className="bg-purple-50 p-4 rounded-xl space-y-3">
-                    <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleGenerateCover(false)}
-                        disabled={isGeneratingCover}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                      >
-                        <Image className="w-4 h-4" />
-                        {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
-                      </button>
-                      <button
-                        onClick={() => handleGenerateCover(true)}
-                        disabled={isGeneratingCover}
-                        className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                      >
-                        <Palette className="w-4 h-4" />
-                        {isGeneratingCover ? 'Generating...' : 'DALL-E'}
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleGenerateCover}
+                      disabled={isGeneratingCover}
+                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Image className="w-4 h-4" />
+                      {isGeneratingCover ? 'Generating...' : 'Generate with Gemini Imagen'}
+                    </button>
                     <button
                       onClick={() => setShowCoverOptions(false)}
                       className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
@@ -359,25 +339,14 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                 </button>
               ) : (
                 <div className="bg-purple-50 p-4 rounded-xl space-y-3">
-                  <h4 className="font-medium text-purple-900">Choose Cover Generation Service</h4>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleGenerateCover(false)}
-                      disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                      <Image className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
-                    </button>
-                    <button
-                      onClick={() => handleGenerateCover(true)}
-                      disabled={isGeneratingCover}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-teal-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-                    >
-                      <Palette className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'DALL-E'}
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleGenerateCover}
+                    disabled={isGeneratingCover}
+                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-6 rounded-xl font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Image className="w-4 h-4" />
+                    {isGeneratingCover ? 'Generating...' : 'Generate with Gemini Imagen'}
+                  </button>
                   <button
                     onClick={() => setShowCoverOptions(false)}
                     className="w-full px-4 py-2 text-purple-600 hover:text-purple-800 transition-colors duration-200"
