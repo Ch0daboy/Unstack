@@ -1,0 +1,93 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-26T09:56:52.936Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Add 'Online Course Generator' to Project Genre List",
+			"complexityScore": 1,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "This task is atomic and does not require further expansion.",
+			"reasoning": "This is a highly localized, single-line change in a known component. The effort is minimal and does not warrant being broken down."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement Routing for Online Course View",
+			"complexityScore": 2,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "This task is atomic and does not require further expansion.",
+			"reasoning": "This involves a small, logical change in a central routing file. It's a single point of modification and is too small to subdivide effectively."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Create `OnlineCourseChapterView` Component Skeleton",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break this task down into creating the basic component layout with placeholders, implementing the local state management for content and loading states, and adding the action buttons with placeholder onClick handlers.",
+			"reasoning": "Creating a new UI view from scratch involves distinct steps: layout (JSX/CSS), state management (hooks), and interactive elements (buttons). Separating these concerns makes the task more manageable."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Extend Gemini Service for Article and Lesson Plan Generation",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break this task down into three subtasks: 1. Implement and test the `generateBlogArticle` function. 2. Implement the `generateLessonPlan` function, including robust JSON parsing and validation for the expected structure. 3. Update the `generateBookOutline` function to handle course-specific prompts.",
+			"reasoning": "This task involves two distinct API functionalities with different requirements (simple text vs. structured JSON). Separating them, along with updating a related function, allows for focused development, prompt engineering, and testing."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Integrate Content Generation into Chapter View",
+			"complexityScore": 5,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Break this task into two subtasks: 1. Integrate the `generateBlogArticle` service call, including handling loading/error states and displaying the returned text. 2. Integrate the `generateLessonPlan` service call, including handling loading/error states and rendering the structured JSON data into the UI.",
+			"reasoning": "The task integrates two separate backend functions into the UI. Splitting the work by feature (article vs. lesson plan) makes it more manageable and easier to test incrementally."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement Featured Image Generation Service",
+			"complexityScore": 5,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Break this task down into implementing the `generateFeaturedImage` async function to call the Imagen API and writing unit tests with a mocked API client to verify correct requests and response handling.",
+			"reasoning": "This task introduces a new external service (Imagen). The complexity lies in the API integration, prompt crafting, and error handling. Separating implementation from testing is a best practice for service-level work."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Integrate Featured Image Generation into Chapter View",
+			"complexityScore": 4,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "This task is atomic and does not require further expansion.",
+			"reasoning": "This is a straightforward integration of a single feature: connect a button to an API call and display the resulting image. It's a single, cohesive unit of work that doesn't benefit from subdivision."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Client-Side TTS Audio Generation Service",
+			"complexityScore": 8,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break this task down into: 1. Implement a wrapper for `window.speechSynthesis` to speak text. 2. Implement a `MediaRecorder` wrapper to capture audio streams into a Blob. 3. Create the main function that synchronizes the speech and recording for a single slide. 4. Extend the function to iterate over all slides and manage the collection of audio Blobs.",
+			"reasoning": "High complexity due to orchestrating two separate, event-driven browser APIs (`Web Speech`, `MediaRecorder`) which are known for compatibility issues. A detailed breakdown is necessary to manage the synchronization and data handling challenges."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Integrate TTS Audio into Lesson Plan View",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break this task down into: 1. Add the 'Generate Audio' button and wire it to call the `ttsService`. 2. Implement the logic to handle the returned map of audio Blobs, creating object URLs for each. 3. Dynamically render an `<audio>` player component for each slide using the generated URLs.",
+			"reasoning": "The integration is complex, involving a long-running client-side process, management of generated Blob URLs (to avoid memory leaks), and dynamically updating the DOM with new audio player elements."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "End-to-End Testing and Documentation Update",
+			"complexityScore": 7,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Break this task into two distinct subtasks: 1. Create and execute a detailed end-to-end test plan covering the entire user flow. 2. Update the `README.md` with a new section detailing API key requirements and setup instructions for both Gemini and Imagen.",
+			"reasoning": "This task combines two very different, high-effort activities: comprehensive software testing and clear technical writing. They require different skills and mindsets and should be tracked and executed separately."
+		}
+	]
+}

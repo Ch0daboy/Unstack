@@ -165,36 +165,11 @@ export const generateBookOutline = async (
     perspectivePrompt = `\nNarrative Perspective: ${perspectiveDescriptions[perspective as keyof typeof perspectiveDescriptions] || perspective}`;
   }
 
-  const fullPrompt = `
-Create a comprehensive book outline based on the following description:
+  const coursePrompt = `\nCreate a comprehensive online course outline based on the following description:\n\nCourse Description: ${prompt}\nGenre: ${genre}\nTarget Audience: ${targetAudience}\n\nPlease provide a response in the following JSON format:\n{\n  "title": "Course Title",\n  "description": "Brief course description",\n  "genre": "${genre || 'General'}",\n  "subGenre": "${subGenre || ''}",\n  "targetAudience": "${targetAudience || 'General readers'}",\n  "heatLevel": "${heatLevel || ''}",\n  "perspective": "${perspective || ''}",\n  "chapters": [\n    {\n      "title": "Module Title",\n      "description": "Module description (2-3 sentences)"\n    }\n  ]\n}\n\nGenerate 5-7 modules that comprehensively cover the topic. Each module should have a clear, descriptive title and a detailed description of what it will cover.\n\nIMPORTANT: Return ONLY the JSON object, no additional text or formatting.\n`;
 
-Book Description: ${prompt}
-${genre ? `Genre: ${genre}` : ''}
-${subGenre ? `Sub-Genre: ${subGenre}` : ''}
-${targetAudience ? `Target Audience: ${targetAudience}` : ''}
+  const bookPrompt = `\nCreate a comprehensive book outline based on the following description:\n\nBook Description: ${prompt}\n${genre ? `Genre: ${genre}` : ''}\n${subGenre ? `Sub-Genre: ${subGenre}` : ''}\n${targetAudience ? `Target Audience: ${targetAudience}` : ''}\n\nPlease provide a response in the following JSON format:\n{\n  "title": "Book Title",\n  "description": "Brief book description",\n  "genre": "${genre || 'General'}",\n   "subGenre": "${subGenre || ''}",\n  "targetAudience": "${targetAudience || 'General readers'}",\n  "heatLevel": "${heatLevel || ''}",\n  "perspective": "${perspective || ''}",\n  "chapters": [\n    {\n      "title": "Chapter Title",\n      "description": "Chapter description (2-3 sentences)"\n    }\n  ]\n}\n\nGenerate 8-12 chapters that comprehensively cover the topic. Make sure each chapter has a clear, descriptive title and a detailed description of what it will cover.${subGenrePrompt}${heatLevelPrompt ? ' Ensure the content and pacing align with the specified heat level.' : ''}\n${perspectivePrompt ? ' Maintain consistent narrative perspective throughout all content.' : ''}\n\nIMPORTANT: Return ONLY the JSON object, no additional text or formatting.\n`;
 
-Please provide a response in the following JSON format:
-{
-  "title": "Book Title",
-  "description": "Brief book description",
-  "genre": "${genre || 'General'}",
-   "subGenre": "${subGenre || ''}",
-  "targetAudience": "${targetAudience || 'General readers'}",
-  "heatLevel": "${heatLevel || ''}",
-  "perspective": "${perspective || ''}",
-  "chapters": [
-    {
-      "title": "Chapter Title",
-      "description": "Chapter description (2-3 sentences)"
-    }
-  ]
-}
-
-Generate 8-12 chapters that comprehensively cover the topic. Make sure each chapter has a clear, descriptive title and a detailed description of what it will cover.${subGenrePrompt}${heatLevelPrompt ? ' Ensure the content and pacing align with the specified heat level.' : ''}
-${perspectivePrompt ? ' Maintain consistent narrative perspective throughout all content.' : ''}
-
-IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
-`;
+  const fullPrompt = genre === 'Online Course Generator' ? coursePrompt : bookPrompt;
 
   const response = await callGeminiAPI(fullPrompt, apiKey);
   
@@ -245,26 +220,7 @@ export const generateChapterOutline = async (
   chapterDescription: string,
   apiKey: string
 ): Promise<SubChapter[]> => {
-  const prompt = `
-Create a detailed outline for the following chapter:
-
-Chapter Title: ${chapterTitle}
-Chapter Description: ${chapterDescription}
-
-Please provide a response in the following JSON format:
-{
-  "sections": [
-    {
-      "title": "Section Title",
-      "description": "Detailed description of what this section will cover (2-3 sentences)"
-    }
-  ]
-}
-
-Generate 4-8 sections that comprehensively break down this chapter. Each section should be substantial enough to warrant its own content generation.
-
-IMPORTANT: Return ONLY the JSON object, no additional text or formatting.
-`;
+  const prompt = `\nCreate a detailed outline for the following chapter:\n\nChapter Title: ${chapterTitle}\nChapter Description: ${chapterDescription}\n\nPlease provide a response in the following JSON format:\n{\n  "sections": [\n    {\n      "title": "Section Title",\n      "description": "Detailed description of what this section will cover (2-3 sentences)"\n    }\n  ]\n}\n\nGenerate 4-8 sections that comprehensively break down this chapter. Each section should be substantial enough to warrant its own content generation.\n\nIMPORTANT: Return ONLY the JSON object, no additional text or formatting.\n`;
 
   const response = await callGeminiAPI(prompt, apiKey);
   
@@ -300,21 +256,50 @@ export const generateContent = async (
   sectionDescription: string,
   apiKey: string
 ): Promise<string> => {
-  const prompt = `
-Write comprehensive, high-quality content for the following section:
-
-Section Title: ${sectionTitle}
-Section Description: ${sectionDescription}
-
-Requirements:
-- Structure the content with clear paragraphs
-- Make it suitable for an eBook format
-- Do not include markdown formatting or section headers
-Please write the content now:
-`;
+  const prompt = `\nWrite comprehensive, high-quality content for the following section:\n\nSection Title: ${sectionTitle}\nSection Description: ${sectionDescription}\n\nRequirements:\n- Structure the content with clear paragraphs\n- Make it suitable for an eBook format\n- Do not include markdown formatting or section headers\nPlease write the content now:\n`;
 
   const response = await callGeminiAPI(prompt, apiKey);
   return response.trim();
+};
+
+export const generateBlogArticle = async (
+  chapterTitle: string,
+  chapterDescription: string,
+  apiKey: string
+): Promise<string> => {
+  const prompt = `\nWrite a comprehensive, high-quality blog article for the following chapter:\n\nChapter Title: ${chapterTitle}\nChapter Description: ${chapterDescription}\n\nRequirements:\n- Structure the content with a clear introduction, body, and conclusion.\n- Use headings and subheadings to organize the content.\n- Write in an engaging and informative tone.\n- The article should be at least 800 words.\n- Do not include markdown formatting.\nPlease write the content now:\n`;
+
+  const response = await callGeminiAPI(prompt, apiKey);
+  return response.trim();
+};
+
+export const generateLessonPlan = async (
+  chapterTitle: string,
+  chapterDescription: string,
+  apiKey: string
+): Promise<string> => {
+  const prompt = `\nCreate a detailed lesson plan and script for a 15-20 minute presentation on the following topic:\n\nChapter Title: ${chapterTitle}\nChapter Description: ${chapterDescription}\n\nThe output should be in JSON format with the following structure:\n{\n  "title": "Presentation Title",\n  "slides": [\n    {\n      "title": "Slide Title",\n      "content": "Bulleted list of key points for the slide.",\n      "script": "The full script for this slide."\n    }\n  ]\n}\n\nGenerate 5-7 slides.\n\nIMPORTANT: Return ONLY the JSON object, no additional text or formatting.\n`;
+
+  const response = await callGeminiAPI(prompt, apiKey);
+  
+  try {
+    // Clean the response to extract JSON
+    let cleanResponse = response.trim();
+    cleanResponse = cleanResponse.replace(/```json\s*|\s*```/g, '');
+    cleanResponse = cleanResponse.replace(/```\s*|\s*```/g, '');
+    
+    const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('No JSON found in response:', response);
+      throw new Error('No valid JSON found in response');
+    }
+    
+    return jsonMatch[0];
+  } catch (error) {
+    console.error('Error parsing lesson plan:', error);
+    console.error('Raw response:', response);
+    throw new Error('Failed to parse lesson plan from AI response. Please try again.');
+  }
 };
 
 export const generateContentWithHeatLevel = async (
@@ -347,22 +332,7 @@ export const generateContentWithHeatLevel = async (
     perspectivePrompt = `\nNarrative Perspective: ${perspectiveDescriptions[perspective as keyof typeof perspectiveDescriptions] || perspective}`;
   }
 
-  const prompt = `
-Write comprehensive, high-quality content for the following section:
-
-Section Title: ${sectionTitle}
-Section Description: ${sectionDescription}
-
-Heat Level Guidelines: ${heatLevelPrompt}
-${perspectivePrompt}
-
-Requirements:
-- Structure the content with clear paragraphs
-- Make it suitable for an eBook format
-- Adhere to the specified heat level throughout
-- Do not include markdown formatting or section headers
-Please write the content now:
-`;
+  const prompt = `\nWrite comprehensive, high-quality content for the following section:\n\nSection Title: ${sectionTitle}\nSection Description: ${sectionDescription}\n\nHeat Level Guidelines: ${heatLevelPrompt}\n${perspectivePrompt}\n\nRequirements:\n- Structure the content with clear paragraphs\n- Make it suitable for an eBook format\n- Adhere to the specified heat level throughout\n- Do not include markdown formatting or section headers\nPlease write the content now:\n`;
 
   const response = await callGeminiAPI(prompt, apiKey);
   return response.trim();

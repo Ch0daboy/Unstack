@@ -21,6 +21,7 @@ const GENRES = [
   'Self-Help',
   'Business',
   'Biography/Memoir',
+  'Online Course Generator',
   'Other'
 ];
 

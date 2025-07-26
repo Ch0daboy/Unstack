@@ -1,0 +1,145 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Add 'Online Course Generator' to Project Genre List",
+        "description": "Modify the `BookPrompt.tsx` component to include 'Online Course Generator' as a new selectable project type in the genre list. This serves as the primary entry point for users to access the new course creation workflow.",
+        "details": "In `src/components/BookPrompt.tsx`, locate the list or dropdown where project genres are defined. Add a new option: { value: 'online-course', label: 'Online Course Generator' }. Ensure this new value is handled correctly by the component's state management and subsequent logic.",
+        "testStrategy": "Unit test the `BookPrompt` component to verify the new option is rendered. Manually test the UI to confirm selection and that the correct genre value is set in the application's state upon creation.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Implement Routing for Online Course View",
+        "description": "Update the main application router in `App.tsx` to conditionally render the new `OnlineCourseChapterView` component when the selected project's genre is 'online-course'.",
+        "details": "In `App.tsx`, modify the routing logic. Add a new route or update an existing one to check the `project.genre` property. If it equals 'online-course', render the `OnlineCourseChapterView` component, passing any necessary props like the chapter or module ID.",
+        "testStrategy": "Manually test the user flow: create a new project with the 'Online Course Generator' genre and verify that the application navigates to and renders the `OnlineCourseChapterView` instead of the default book view.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Create `OnlineCourseChapterView` Component Skeleton",
+        "description": "Create the `OnlineCourseChapterView.tsx` component, which will serve as the central dashboard for managing all assets of a single course module. This includes placeholders and action buttons for generating content.",
+        "details": "Create a new file `src/views/OnlineCourseChapterView.tsx`. This React component should have a layout with distinct sections for the Blog Article, Featured Image, and Lesson Plan. Add buttons labeled 'Generate Article', 'Generate Image', and 'Generate Lesson Plan'. Implement local state using `useState` to hold the generated content and manage loading states (e.g., `isArticleLoading`, `isPlanLoading`).",
+        "testStrategy": "Render the component in a test environment (e.g., Storybook) to verify its layout and the presence of all UI elements. Unit test that clicking the buttons triggers placeholder functions and correctly sets loading states.",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Extend Gemini Service for Article and Lesson Plan Generation",
+        "description": "Extend the `geminiService.ts` module to include functions for generating blog articles and lesson plans using the Google Gemini API.",
+        "details": "In `src/services/geminiService.ts`, add two new async functions: `generateBlogArticle(prompt: string)` and `generateLessonPlan(prompt: string)`. Both functions will call the `gemini-1.5-flash-latest` model. `generateBlogArticle` should be prompted to return an 800+ word article. `generateLessonPlan` must be prompted to return a structured JSON object with `{ title: string, slides: [{ title: string, content: string[], script: string }] }`. Update the existing `generateBookOutline` to handle course-specific prompts.",
+        "testStrategy": "Write unit tests for `generateBlogArticle` and `generateLessonPlan` using a mocked Gemini API client. Verify that `generateBlogArticle` returns a string and `generateLessonPlan` returns a valid JSON object matching the specified schema.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Integrate Content Generation into Chapter View",
+        "description": "Integrate the blog article and lesson plan generation logic into the `OnlineCourseChapterView` component, allowing users to generate and view the content.",
+        "details": "In `OnlineCourseChapterView.tsx`, import the functions from `geminiService.ts`. Wire the 'Generate Article' button to call `generateBlogArticle`, and the 'Generate Lesson Plan' button to call `generateLessonPlan`. Use `try...catch` blocks for error handling. Display the results in their respective UI sections. Use loading indicators while the API calls are in progress.",
+        "testStrategy": "Perform functional testing in the UI. Click the generation buttons and verify that loading indicators appear, and upon completion, the generated text and structured lesson plan are correctly displayed. Check the browser's network tab to confirm the API calls are being made.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement Featured Image Generation Service",
+        "description": "Extend the `coverService.ts` module to add a function for generating a featured image using the Google Imagen API.",
+        "details": "In `src/services/coverService.ts`, create a new async function `generateFeaturedImage(prompt: string)`. This function will make a request to the `imagen-4.0-generate-preview-06-06` model. The prompt should request an image with a 16:9 aspect ratio suitable for a blog article.",
+        "testStrategy": "Write unit tests for `generateFeaturedImage` with a mocked Imagen API client. Verify that the function returns a URL or base64 string for the generated image.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Integrate Featured Image Generation into Chapter View",
+        "description": "Integrate the featured image generation into the `OnlineCourseChapterView`, allowing users to generate and view the image for their module.",
+        "details": "In `OnlineCourseChapterView.tsx`, import `generateFeaturedImage` from `coverService.ts`. Wire the 'Generate Image' button to call this function. Display a loading state during generation. Once the image URL is returned, display it in an `<img>` tag within the featured image section.",
+        "testStrategy": "Functionally test the 'Generate Image' button. Verify the loading state and that the generated image is displayed correctly with a 16:9 aspect ratio. Check for proper error handling if the API call fails.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          6
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Client-Side TTS Audio Generation Service",
+        "description": "Implement a client-side text-to-speech (TTS) service using the Web Speech and MediaRecorder APIs to generate and capture audio for lesson plan slides.",
+        "details": "Create a new service file `src/services/ttsService.ts`. Implement a function `generateLessonPlanAudio(slides)`. This function will iterate through the slides array. For each slide, it will use `window.speechSynthesis` to speak the `script`. Simultaneously, it will use `MediaRecorder` to capture the audio output. The captured audio should be stored as a Blob (in WebM/Opus format) and returned, perhaps in a map of `slideId -> audioBlobUrl`.",
+        "testStrategy": "Create a test page or component to call `generateLessonPlanAudio` with mock slide data. Verify that `speechSynthesis` is invoked and that `MediaRecorder` produces a non-empty audio Blob for each slide. Add checks to ensure the functions handle cases where the APIs are not supported by the browser.",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Integrate TTS Audio into Lesson Plan View",
+        "description": "Integrate the TTS audio generation into the `OnlineCourseChapterView`, allowing users to create and play back audio for each slide of the lesson plan.",
+        "details": "In `OnlineCourseChapterView.tsx`, add a 'Generate Audio' button. When clicked, call `ttsService.generateLessonPlanAudio` with the generated lesson plan data. Once the audio Blobs are created, generate object URLs using `URL.createObjectURL()` and associate them with each slide. Add a play button next to each slide in the UI that controls an `<audio>` element with the corresponding audio URL.",
+        "testStrategy": "Manually test the full audio flow. Generate a lesson plan, then click 'Generate Audio'. Verify that play buttons appear for each slide. Click the play buttons and confirm that the correct audio for each slide's script is played back. Test on different browsers (Chrome, Firefox) to check for compatibility issues.",
+        "priority": "medium",
+        "dependencies": [
+          8
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "End-to-End Testing and Documentation Update",
+        "description": "Perform end-to-end testing of the complete Online Course Generator MVP flow and add clear instructions for API key configuration.",
+        "details": "Conduct a full user journey test: 1. Create a new 'Online Course Generator' project. 2. Generate a course outline. 3. Open a module. 4. Generate the article, image, and lesson plan in sequence. 5. Generate the audio for the lesson plan. 6. Verify all assets are displayed and functional. Additionally, update the `README.md` file with clear, step-by-step instructions on how to obtain and configure the necessary API keys for Google Gemini and Google Cloud (for Imagen).",
+        "testStrategy": "Execute a comprehensive test plan covering the entire user flow described in the details. Have another developer or a QA tester follow the new `README.md` instructions to set up the project from scratch and confirm they can get the feature working without confusion.",
+        "priority": "low",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "status": "done",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-26T09:55:38.977Z",
+      "updated": "2025-07-26T10:03:37.452Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

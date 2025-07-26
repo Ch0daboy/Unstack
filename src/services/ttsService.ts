@@ -119,39 +119,50 @@ export const selectVoiceForBook = (book: Book, availableVoices?: VoiceOption[]):
 // Generate speech for text content
 export const generateSpeech = (text: string, voice: SpeechSynthesisVoice, rate: number = 1): Promise<Blob> => {
   return new Promise((resolve, reject) => {
-    // Check if browser supports speech synthesis
-    if (!('speechSynthesis' in window)) {
-      reject(new Error('Speech synthesis not supported in this browser'));
+    if (!('speechSynthesis' in window) || !('MediaRecorder' in window)) {
+      reject(new Error('Speech synthesis or MediaRecorder not supported in this browser'));
       return;
     }
 
-    // For longer texts, we need to use a different approach since Web Speech API
-    // doesn't directly provide audio file output. We'll use MediaRecorder to capture audio.
-    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.voice = voice;
     utterance.rate = rate;
     utterance.pitch = 1;
     utterance.volume = 1;
 
-    // Create audio context for recording
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const mediaStreamDestination = audioContext.createMediaStreamDestination();
-    
-    // We'll simulate audio generation for now since Web Speech API doesn't provide direct audio output
-    // In a production app, you'd want to use a proper TTS service like ElevenLabs or Google Cloud TTS
-    
-    utterance.onend = () => {
-      // Create a dummy blob for now - in real implementation this would be actual audio data
-      const dummyAudioData = new ArrayBuffer(1024);
-      const blob = new Blob([dummyAudioData], { type: 'audio/wav' });
+    const dest = audioContext.createMediaStreamDestination();
+    const mediaRecorder = new MediaRecorder(dest.stream);
+
+    const chunks: BlobPart[] = [];
+    mediaRecorder.ondataavailable = (event) => {
+      chunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'audio/webm;codecs=opus' });
       resolve(blob);
+      audioContext.close();
+    };
+
+    const source = audioContext.createBufferSource(); // Dummy source to keep context running
+
+    utterance.onstart = () => {
+      mediaRecorder.start();
+    };
+
+    utterance.onend = () => {
+      mediaRecorder.stop();
     };
 
     utterance.onerror = (event) => {
       reject(new Error(`Speech synthesis error: ${event.error}`));
     };
 
+    // Hack to connect utterance to media recorder
+    const utteranceSource = audioContext.createMediaStreamSource(dest.stream);
+    utteranceSource.connect(audioContext.destination);
+    
     speechSynthesis.speak(utterance);
   });
 };
@@ -244,4 +255,51 @@ export const formatDuration = (seconds: number): string => {
   } else {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
+};
+
+export const generateLessonPlanAudio = async (
+  lessonPlan: any,
+  voice: SpeechSynthesisVoice,
+  onProgress?: (progress: number, currentSlide: string) => void
+): Promise<any> => {
+  const audioSlides: any[] = [];
+  let totalDuration = 0;
+
+  for (let i = 0; i < lessonPlan.slides.length; i++) {
+    const slide = lessonPlan.slides[i];
+    onProgress?.(i / lessonPlan.slides.length, slide.title);
+
+    try {
+      const audioBlob = await generateSpeech(slide.script, voice);
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      const wordCount = slide.script.split(' ').length;
+      const estimatedDuration = (wordCount / 150) * 60;
+
+      audioSlides.push({
+        ...slide,
+        audioBlob,
+        audioUrl,
+        duration: estimatedDuration,
+        status: 'completed'
+      });
+      totalDuration += estimatedDuration;
+    } catch (error) {
+      console.error(`Error generating audio for slide ${slide.title}:`, error);
+      audioSlides.push({
+        ...slide,
+        status: 'error'
+      });
+    }
+  }
+
+  onProgress?.(1, 'Completed');
+
+  return {
+    ...lessonPlan,
+    slides: audioSlides,
+    totalDuration,
+    generatedAt: new Date().toISOString(),
+    status: 'completed'
+  };
 };

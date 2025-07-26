@@ -40,7 +40,7 @@ Unstack is a comprehensive AI-powered platform that helps you create, edit, and 
 - **Multiple Formats**: Choose the best format for your distribution needs
 
 ### 🎨 Cover Generation
-- **AI Cover Art**: Generate professional book covers using DALL-E
+- **AI Cover Art**: Generate professional book covers using Google Imagen
 - **Genre-Specific**: Covers tailored to your book's genre and style
 - **Custom Prompts**: Detailed prompts based on book content and metadata
 - **High Resolution**: Print-ready cover images
@@ -57,8 +57,8 @@ Unstack is a comprehensive AI-powered platform that helps you create, edit, and 
 - Node.js 18+ and npm
 - API Keys for:
   - Google Gemini (for content generation)
+  - Google Cloud with Imagen enabled (for image generation)
   - Perplexity AI (for research, optional)
-  - OpenAI (for cover generation, optional)
 - Supabase account (for database and authentication)
 
 ### Installation
@@ -112,8 +112,8 @@ Unstack is a comprehensive AI-powered platform that helps you create, edit, and 
 ### Backend & Services
 - **Supabase** for database, authentication, and real-time features
 - **Google Gemini API** for AI content generation
+- **Google Imagen API** for cover image generation
 - **Perplexity AI** for research and fact-checking
-- **OpenAI DALL-E** for cover image generation
 
 ### Libraries & Tools
 - **jsPDF** for PDF generation
@@ -220,9 +220,10 @@ src/
 
 Add your API keys in the user settings:
 
-- **Google Gemini**: Required for content generation
-- **Perplexity AI**: Optional, for enhanced research
-- **OpenAI**: Optional, for cover generation
+- **Google Gemini**: Required for content generation. You can get a key from [Google AI Studio](https://aistudio.google.com/).
+- **Google Cloud with Imagen enabled**: Required for image generation. You will need a Google Cloud project with the "Vertex AI API" enabled. You can find your project's API key in the Google Cloud Console under "APIs & Services > Credentials".
+- **Perplexity AI**: Optional, for enhanced research.
+- **OpenAI**: Optional, for cover generation.
 
 ### Supabase Configuration
 
