@@ -7,6 +7,7 @@ import BookSidebar from './components/BookSidebar';
 import BookPrompt from './components/BookPrompt';
 import OutlineView from './components/OutlineView';
 import ChapterView from './components/ChapterView';
+import OnlineCourseChapterView from './components/OnlineCourseChapterView';
 import BookEditor from './components/BookEditor';
 import PersonaManagement from './components/PersonaManagement';
 import { Book, BookChapter, SubChapter, WritingPersona } from './types';
@@ -134,6 +135,31 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [book]);
 
+  const renderChapterView = () => {
+    if (currentStep === 'chapter' && selectedChapter && book) {
+      if (book.genre === 'Online Course Generator') {
+        return (
+          <OnlineCourseChapterView
+            chapter={selectedChapter}
+            onBack={handleBackToOutline}
+            onUpdateChapter={handleUpdateChapter}
+            apiKeys={apiKeys}
+          />
+        );
+      } else {
+        return (
+          <ChapterView
+            chapter={selectedChapter}
+            onBack={handleBackToOutline}
+            onUpdateChapter={handleUpdateChapter}
+            apiKeys={apiKeys}
+          />
+        );
+      }
+    }
+    return null;
+  };
+
   return (
     <AuthWrapper>
       <div className="flex h-screen">
@@ -207,14 +233,7 @@ function App() {
                 />
               )}
 
-              {currentStep === 'chapter' && selectedChapter && book && (
-                <ChapterView 
-                  chapter={selectedChapter}
-                  onBack={handleBackToOutline}
-                  onUpdateChapter={handleUpdateChapter}
-                  apiKeys={apiKeys}
-                />
-              )}
+              {renderChapterView()}
 
               {currentStep === 'edit' && book && (
                 <BookEditor
