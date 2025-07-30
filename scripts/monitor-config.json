@@ -1,0 +1,11 @@
+{
+  "checkInterval": "*/5 * * * *",
+  "enableAutoRefactoring": true,
+  "enableAutoTesting": true,
+  "maxConcurrentPRs": 3,
+  "notifications": {
+    "slack": false,
+    "email": false,
+    "discord": false
+  }
+}

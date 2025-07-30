@@ -1,0 +1,33 @@
+{
+  "name": "unstack-pr-monitor",
+  "version": "1.0.0",
+  "description": "Automated PR monitoring and code quality system for Unstack",
+  "main": "pr-monitor.js",
+  "scripts": {
+    "start": "node pr-monitor.js",
+    "monitor": "node monitor-daemon.js",
+    "refactor": "node refactor-analyzer.js",
+    "test-pr": "node test-runner.js",
+    "setup": "npm install && node setup.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.2",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.6.1",
+    "inquirer": "^8.2.6",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5"
+  },
+  "keywords": [
+    "github",
+    "pr-monitoring",
+    "code-quality",
+    "automation",
+    "refactoring"
+  ],
+  "author": "Unstack Team",
+  "license": "MIT"
+}

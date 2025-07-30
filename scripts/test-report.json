@@ -1,0 +1,69 @@
+{
+  "timestamp": "2025-07-26T13:26:13.707Z",
+  "prNumber": null,
+  "summary": {
+    "total": 8,
+    "passed": 6,
+    "failed": 2,
+    "skipped": 0,
+    "passRate": 75
+  },
+  "tests": [
+    {
+      "name": "Build Test",
+      "status": "passed",
+      "duration": 6557,
+      "error": null,
+      "critical": true
+    },
+    {
+      "name": "TypeScript Check",
+      "status": "passed",
+      "duration": 494,
+      "error": null,
+      "critical": true
+    },
+    {
+      "name": "Linting",
+      "status": "failed",
+      "duration": 1573,
+      "error": "Linting failed: Command failed: npm run lint\n\nOops! Something went wrong! :(\n\nESLint: 9.32.0\n\nTypeError: Error while loading rule '@typescript-eslint/no-unused-expressions': Cannot read properties of undefined (reading 'allowShortCircuit')\nOccurred while linting /mnt/persist/workspace/src/App.tsx\n    at Object.create (/mnt/persist/workspace/node_modules/eslint/lib/rules/no-unused-expressions.js:85:5)\n    at create (/mnt/persist/workspace/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unused-expressions.js:28:32)\n    at Object.create (/mnt/persist/workspace/node_modules/@typescript-eslint/utils/dist/eslint-utils/RuleCreator.js:31:20)\n    at createRuleListeners (/mnt/persist/workspace/node_modules/eslint/lib/linter/linter.js:1020:15)\n    at /mnt/persist/workspace/node_modules/eslint/lib/linter/linter.js:1152:7\n    at Array.forEach (<anonymous>)\n    at runRules (/mnt/persist/workspace/node_modules/eslint/lib/linter/linter.js:1086:31)\n    at #flatVerifyWithoutProcessors (/mnt/persist/workspace/node_modules/eslint/lib/linter/linter.js:2102:4)\n    at Linter._verifyWithFlatConfigArrayAndWithoutProcessors (/mnt/persist/workspace/node_modules/eslint/lib/linter/linter.js:2190:43)\n    at Linter._verifyWithFlatConfigArray (/mnt/persist/workspace/node_modules/eslint/lib/linter/linter.js:2293:15)\n",
+      "critical": false
+    },
+    {
+      "name": "Dependency Security",
+      "status": "failed",
+      "duration": 2014,
+      "error": "Security vulnerabilities found in dependencies",
+      "critical": false
+    },
+    {
+      "name": "Code Quality",
+      "status": "passed",
+      "duration": 3,
+      "error": null,
+      "critical": false
+    },
+    {
+      "name": "Performance",
+      "status": "passed",
+      "duration": 5974,
+      "error": null,
+      "critical": false
+    },
+    {
+      "name": "Security Scan",
+      "status": "passed",
+      "duration": 13,
+      "error": null,
+      "critical": false
+    },
+    {
+      "name": "Accessibility",
+      "status": "passed",
+      "duration": 1,
+      "error": null,
+      "critical": false
+    }
+  ]
+}
