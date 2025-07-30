@@ -152,11 +152,14 @@ const BookSidebar: React.FC<BookSidebarProps> = ({
                         {book.title}
                       </h3>
                       {book.coverUrl && (
-                        <img 
-                          src={book.coverUrl} 
-                          alt={`${book.title} cover`}
-                          className="w-8 h-12 object-cover rounded-sm mr-2 flex-shrink-0"
-                        />
+                        <div className="relative group mr-2 flex-shrink-0">
+                          <img
+                            src={book.coverUrl}
+                            alt={`${book.title} cover`}
+                            className="w-12 h-18 object-cover rounded-md shadow-sm group-hover:shadow-md transition-shadow duration-200"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-md transition-all duration-200"></div>
+                        </div>
                       )}
                       <button
                         onClick={(e) => handleDeleteBook(book.id, e)}

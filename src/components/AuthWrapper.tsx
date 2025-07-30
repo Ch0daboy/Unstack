@@ -23,17 +23,157 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    checkUser();
+    // Handle OAuth callback first
+    handleOAuthCallback();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setUser(session?.user ? { id: session.user.id, email: session.user.email || '' } : null);
-        setLoading(false);
+        console.log('Auth state changed:', event, session?.user?.email);
+
+        if (event === 'SIGNED_IN' && session) {
+          console.log('User signed in successfully:', session.user.email);
+          setUser({ id: session.user.id, email: session.user.email || '' });
+          setLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          setUser(null);
+          setLoading(false);
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          console.log('Token refreshed:', session.user.email);
+          setUser({ id: session.user.id, email: session.user.email || '' });
+          setLoading(false);
+        } else {
+          setUser(session?.user ? { id: session.user.id, email: session.user.email || '' } : null);
+          setLoading(false);
+        }
       }
     );
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleOAuthCallback = async () => {
+    try {
+      console.log('Checking for OAuth callback...', {
+        hash: window.location.hash,
+        search: window.location.search,
+        pathname: window.location.pathname
+      });
+
+      // Check if we have OAuth tokens in the URL
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const urlParams = new URLSearchParams(window.location.search);
+
+      const hasAccessToken = hashParams.get('access_token');
+      const hasCode = urlParams.get('code');
+      const hasError = hashParams.get('error') || urlParams.get('error');
+
+      if (hasError) {
+        const errorDescription = hashParams.get('error_description') || urlParams.get('error_description') || hasError;
+        console.error('OAuth error in URL:', hasError, errorDescription);
+
+        // Show user-friendly error message
+        const decodedError = decodeURIComponent(errorDescription).replace(/\+/g, ' ');
+        alert(`Sign-in failed: ${decodedError}`);
+
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        setLoading(false);
+        return;
+      }
+
+      if (hasAccessToken || hasCode) {
+        console.log('OAuth callback detected, exchanging tokens...', {
+          hasAccessToken: !!hasAccessToken,
+          hasCode: !!hasCode
+        });
+
+        // First, try to exchange the session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+
+          // Try to handle the OAuth callback explicitly
+          const { data: callbackData, error: callbackError } = await supabase.auth.getUser();
+
+          if (callbackError) {
+            console.error('Error in OAuth callback:', callbackError);
+            setLoading(false);
+            return;
+          }
+
+          if (callbackData.user) {
+            console.log('User found via getUser:', callbackData.user.email);
+            setUser({
+              id: callbackData.user.id,
+              email: callbackData.user.email || ''
+            });
+            setLoading(false);
+
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+        }
+
+        if (sessionData.session) {
+          console.log('OAuth session established:', sessionData.session.user.email);
+          setUser({
+            id: sessionData.session.user.id,
+            email: sessionData.session.user.email || ''
+          });
+          setLoading(false);
+
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        } else {
+          console.log('No session found after OAuth callback, trying refresh...');
+
+          // Try to refresh the session
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+          if (!refreshError && refreshData.session) {
+            console.log('Session refreshed successfully:', refreshData.session.user.email);
+            setUser({
+              id: refreshData.session.user.id,
+              email: refreshData.session.user.email || ''
+            });
+            setLoading(false);
+
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+        }
+      }
+
+      // No OAuth callback, check for existing session
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Error getting session:', error);
+        setLoading(false);
+        return;
+      }
+
+      if (data.session) {
+        console.log('Existing session found:', data.session.user.email);
+        setUser({
+          id: data.session.user.id,
+          email: data.session.user.email || ''
+        });
+        setLoading(false);
+      } else {
+        console.log('No session found, checking user...');
+        checkUser();
+      }
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      checkUser();
+    }
+  };
 
   const checkUser = async () => {
     console.log('Starting user authentication check...');
@@ -131,17 +271,28 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
   };
 
   const handleOAuthSignIn = async (provider: 'github' | 'google') => {
+    setAuthLoading(true);
+
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/`,
+          queryParams: provider === 'google' ? {
+            access_type: 'offline',
+            prompt: 'consent',
+          } : undefined,
         }
       });
-      
+
       if (error) throw error;
+
+      // The redirect will happen automatically
+      console.log(`${provider} OAuth initiated:`, data);
     } catch (error: any) {
-      alert(error.message || 'OAuth sign in failed');
+      console.error(`${provider} sign-in error:`, error);
+      alert(error.message || `${provider} sign-in failed`);
+      setAuthLoading(false);
     }
   };
 

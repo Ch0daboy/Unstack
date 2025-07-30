@@ -27,6 +27,12 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 -- Enable RLS
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can read own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
+DROP POLICY IF EXISTS "System can insert user profiles" ON user_profiles;
+
 -- Create policies
 CREATE POLICY "Users can read own profile"
   ON user_profiles
@@ -46,6 +52,13 @@ CREATE POLICY "Users can update own profile"
   TO authenticated
   USING (auth.uid() = id);
 
+-- Allow system to insert profiles during signup (for triggers)
+CREATE POLICY "System can insert user profiles"
+  ON user_profiles
+  FOR INSERT
+  TO service_role
+  WITH CHECK (true);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_user_profiles_id ON user_profiles(id);
 
@@ -53,9 +66,16 @@ CREATE INDEX IF NOT EXISTS idx_user_profiles_id ON user_profiles(id);
 CREATE OR REPLACE FUNCTION create_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Insert with security definer to bypass RLS
   INSERT INTO public.user_profiles (id, default_author_name)
-  VALUES (NEW.id, '');
+  VALUES (NEW.id, '')
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Log the error but don't fail the user creation
+    RAISE WARNING 'Failed to create user profile for %: %', NEW.id, SQLERRM;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

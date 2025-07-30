@@ -1,5 +1,6 @@
 import { Book, BookChapter, SubChapter } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { generateOnlineCourse } from './onlineCourseService';
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
@@ -124,6 +125,82 @@ const callGeminiAPI = async (prompt: string, apiKey: string): Promise<string> =>
   throw new Error('Maximum retries exceeded');
 };
 
+/**
+ * Generates an online course outline and converts it to Book format
+ */
+const generateOnlineCourseOutline = async (
+  prompt: string,
+  targetAudience: string,
+  apiKey: string,
+  author: string,
+  generateAudio: boolean = false
+): Promise<Book> => {
+  try {
+    // Generate the online course using the specialized service
+    const course = await generateOnlineCourse(
+      prompt, // topic
+      `Online course about ${prompt} for ${targetAudience || 'students'}`, // description
+      apiKey, // perplexityApiKey (using gemini key for now)
+      apiKey, // geminiApiKey
+      generateAudio // generateAudio (can be made configurable later)
+    );
+
+    // Convert course sections to book chapters
+    const chapters: BookChapter[] = course.sections.map((section, index) => ({
+      id: uuidv4(),
+      title: section.title,
+      description: section.summary,
+      status: 'pending' as const,
+      orderIndex: index,
+      subChapters: [
+        {
+          id: uuidv4(),
+          title: 'Lesson Plan',
+          description: 'Detailed lesson plan for this section',
+          content: section.lessonPlan,
+          status: 'completed' as const,
+          orderIndex: 0
+        },
+        {
+          id: uuidv4(),
+          title: 'Google Slides',
+          description: 'Slide content for this section',
+          content: section.slides.join('\n\n---\n\n'),
+          status: 'completed' as const,
+          orderIndex: 1
+        },
+        {
+          id: uuidv4(),
+          title: 'Narration Script',
+          description: 'Audio script for this section',
+          content: section.script,
+          status: 'completed' as const,
+          orderIndex: 2
+        }
+      ]
+    }));
+
+    return {
+      id: uuidv4(),
+      title: course.title,
+      author: author || 'Course Instructor',
+      description: course.description,
+      genre: 'Online Course',
+      subGenre: '',
+      tone: 'Educational',
+      heatLevel: '',
+      perspective: '',
+      targetAudience: targetAudience || 'Students',
+      coverUrl: '',
+      chapters,
+      status: 'completed' as const
+    };
+  } catch (error) {
+    console.error('Error generating online course outline:', error);
+    throw new Error('Failed to generate online course outline. Please try again.');
+  }
+};
+
 export const generateBookOutline = async (
   prompt: string, 
   genre: string, 
@@ -132,8 +209,14 @@ export const generateBookOutline = async (
   heatLevel: string,
   perspective: string,
   author: string,
-  apiKey: string
+  apiKey: string,
+  generateAudio: boolean = false
 ): Promise<Book> => {
+  // Special handling for Online Course genre
+  if (genre.toLowerCase() === 'online course') {
+    return await generateOnlineCourseOutline(prompt, targetAudience, apiKey, author, generateAudio);
+  }
+
   let heatLevelPrompt = '';
   if (genre.toLowerCase() === 'romance' && heatLevel) {
     const heatLevelDescriptions = {

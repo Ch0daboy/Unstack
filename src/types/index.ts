@@ -30,6 +30,8 @@ export interface Book {
   chapters: BookChapter[];
   status: 'draft' | 'generating' | 'completed';
   audiobook?: AudiobookData;
+  writingPersonaId?: string;
+  writingPersona?: WritingPersona;
 }
 
 export interface AudiobookData {
@@ -56,4 +58,42 @@ export interface VoiceOption {
   gender: 'male' | 'female' | 'neutral';
   language: string;
   isRecommended?: boolean;
+}
+
+export interface WritingPersona {
+  id: string;
+  name: string;
+  description: string;
+  authorName?: string;
+  sampleText?: string;
+  analysisResults?: PersonaAnalysis;
+  preferences: PersonaPreferences;
+  isFavorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersonaAnalysis {
+  writingStyle: {
+    sentenceLength: 'short' | 'medium' | 'long' | 'varied';
+    vocabulary: 'simple' | 'moderate' | 'complex' | 'academic';
+    tone: string[];
+    voiceCharacteristics: string[];
+  };
+  structuralElements: {
+    paragraphLength: 'short' | 'medium' | 'long';
+    dialogueStyle: string;
+    descriptiveStyle: string;
+    pacing: 'fast' | 'moderate' | 'slow' | 'varied';
+  };
+  genreSpecialty: string[];
+  strengthsAndQuirks: string[];
+  confidence: number;
+}
+
+export interface PersonaPreferences {
+  preferredGenres: string[];
+  avoidedTopics: string[];
+  specialInstructions: string;
+  targetAudience: string[];
 }

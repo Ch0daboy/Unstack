@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BookOpen, Sparkles, Wand2 } from 'lucide-react';
+import { BookOpen, Sparkles, Wand2, User, ChevronDown, Loader, RefreshCw } from 'lucide-react';
 import { generateBookOutline } from '../services/geminiService';
-import { Book } from '../types';
+import { Book, WritingPersona } from '../types';
 import { getUserProfile } from '../services/userService';
+import { getUserPersonas, generateContentWithPersona } from '../services/personaService';
 
 interface BookPromptProps {
   onBookGenerated: (book: Book) => void;
@@ -21,6 +22,7 @@ const GENRES = [
   'Self-Help',
   'Business',
   'Biography/Memoir',
+  'Online Course', // Added new genre
   'Other'
 ];
 
@@ -69,22 +71,32 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [targetAudience, setTargetAudience] = useState('');
+  const [personas, setPersonas] = useState<WritingPersona[]>([]);
+  const [selectedPersona, setSelectedPersona] = useState<WritingPersona | null>(null);
+  const [showPersonaDropdown, setShowPersonaDropdown] = useState(false);
+  const [generateAudio, setGenerateAudio] = useState(false);
 
-  // Load user's default author name on component mount
+  // Load user's default author name and personas on component mount
   React.useEffect(() => {
-    const loadUserProfile = async () => {
+    const loadUserData = async () => {
       try {
-        const profile = await getUserProfile();
+        const [profile, userPersonas] = await Promise.all([
+          getUserProfile(),
+          getUserPersonas()
+        ]);
+
         if (profile?.default_author_name) {
           setAuthor(profile.default_author_name);
         }
+
+        setPersonas(userPersonas);
       } catch (error) {
-        console.error('Error loading user profile:', error);
+        console.error('Error loading user data:', error);
         // Don't show error to user, just continue without auto-fill
       }
     };
-    
-    loadUserProfile();
+
+    loadUserData();
   }, []);
 
   const ROMANCE_SUBGENRES = [
@@ -229,8 +241,54 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
 
     setIsGenerating(true);
     try {
-      const book = await generateBookOutline(prompt, genre, subGenre, targetAudience, heatLevel, perspective, author, apiKeys.gemini);
-      onBookGenerated(book);
+      // Enhance prompt with persona style if selected
+      let enhancedPrompt = prompt;
+      if (selectedPersona && selectedPersona.analysisResults) {
+        const analysis = selectedPersona.analysisResults;
+        enhancedPrompt += `\n\nWriting Style Instructions:
+- Sentence length: ${analysis.writingStyle.sentenceLength}
+- Vocabulary level: ${analysis.writingStyle.vocabulary}
+- Tone: ${analysis.writingStyle.tone.join(', ')}
+- Voice characteristics: ${analysis.writingStyle.voiceCharacteristics.join(', ')}
+- Paragraph style: ${analysis.structuralElements.paragraphLength}
+- Pacing: ${analysis.structuralElements.pacing}`;
+
+        if (analysis.strengthsAndQuirks.length > 0) {
+          enhancedPrompt += `\n- Key characteristics: ${analysis.strengthsAndQuirks.join(', ')}`;
+        }
+      }
+
+      if (selectedPersona && selectedPersona.preferences.specialInstructions) {
+        enhancedPrompt += `\n\nAdditional instructions: ${selectedPersona.preferences.specialInstructions}`;
+      }
+
+      // Use persona's author name if available
+      const finalAuthor = selectedPersona?.authorName || author;
+
+      // For Online Course genre, pass the generateAudio option
+      if (isOnlineCourse) {
+        const book = await generateBookOutline(enhancedPrompt, genre, subGenre, targetAudience, heatLevel, perspective, finalAuthor, apiKeys.gemini, generateAudio);
+        
+        // Add persona reference to the book
+        const bookWithPersona = {
+          ...book,
+          writingPersonaId: selectedPersona?.id,
+          writingPersona: selectedPersona || undefined
+        };
+
+        onBookGenerated(bookWithPersona);
+      } else {
+        const book = await generateBookOutline(enhancedPrompt, genre, subGenre, targetAudience, heatLevel, perspective, finalAuthor, apiKeys.gemini);
+
+        // Add persona reference to the book
+        const bookWithPersona = {
+          ...book,
+          writingPersonaId: selectedPersona?.id,
+          writingPersona: selectedPersona || undefined
+        };
+
+        onBookGenerated(bookWithPersona);
+      }
     } catch (error) {
       console.error('Error generating book outline:', error);
       alert('Failed to generate book outline. Please check your API key and try again.');
@@ -240,6 +298,7 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
   };
 
   const isRomance = genre.toLowerCase() === 'romance';
+  const isOnlineCourse = genre.toLowerCase() === 'online course';
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -307,6 +366,90 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
               <p className="text-xs text-gray-500 mt-1">
                 Auto-filled from your user settings, but you can edit it for this book
               </p>
+            </div>
+
+            <div>
+              <label htmlFor="persona" className="block text-sm font-medium text-gray-700 mb-2">
+                Writing Persona (Optional)
+              </label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowPersonaDropdown(!showPersonaDropdown)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className={selectedPersona ? 'text-gray-900' : 'text-gray-500'}>
+                      {selectedPersona ? selectedPersona.name : 'Select a writing persona...'}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showPersonaDropdown ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showPersonaDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPersona(null);
+                          setShowPersonaDropdown(false);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-gray-600"
+                      >
+                        No persona (default style)
+                      </button>
+                      {personas.map((persona) => (
+                        <button
+                          key={persona.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPersona(persona);
+                            setShowPersonaDropdown(false);
+                            // Auto-fill author name if persona has one
+                            if (persona.authorName && !author) {
+                              setAuthor(persona.authorName);
+                            }
+                          }}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md"
+                        >
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-indigo-500" />
+                            <div>
+                              <div className="font-medium text-gray-900">{persona.name}</div>
+                              {persona.description && (
+                                <div className="text-xs text-gray-500 truncate">{persona.description}</div>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {personas.length === 0 && (
+                      <div className="p-4 text-center text-gray-500">
+                        <User className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No personas created yet</p>
+                        <p className="text-xs">Go to Personas to create your first writing style</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {selectedPersona && (
+                <div className="mt-2 p-3 bg-indigo-50 rounded-lg">
+                  <p className="text-xs text-indigo-700 font-medium">Selected: {selectedPersona.name}</p>
+                  {selectedPersona.description && (
+                    <p className="text-xs text-indigo-600 mt-1">{selectedPersona.description}</p>
+                  )}
+                  {selectedPersona.analysisResults && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Sparkles className="w-3 h-3 text-indigo-500" />
+                      <span className="text-xs text-indigo-600">AI-analyzed writing style</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
@@ -430,6 +573,25 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
             )}
           </div>
 
+          {isOnlineCourse && (
+            <div>
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={generateAudio}
+                  onChange={(e) => setGenerateAudio(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Generate Audio Narration (Text-to-Speech)
+                </span>
+              </label>
+              <p className="text-xs text-gray-600 mt-1">
+                Automatically generate audio narration for each section using AI voice synthesis
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={!prompt.trim() || isGenerating}
@@ -438,12 +600,12 @@ const BookPrompt: React.FC<BookPromptProps> = ({ onBookGenerated, apiKeys }) => 
             {isGenerating ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Generating Outline...
+                {isOnlineCourse ? 'Generating Course...' : 'Generating Outline...'}
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                Generate Book Outline
+                {isOnlineCourse ? 'Generate Course Outline' : 'Generate Book Outline'}
               </>
             )}
           </button>

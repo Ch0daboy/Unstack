@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import AuthWrapper from './components/AuthWrapper';
 import { supabase } from './lib/supabase';
 import BookSidebar from './components/BookSidebar';
@@ -8,14 +8,16 @@ import BookPrompt from './components/BookPrompt';
 import OutlineView from './components/OutlineView';
 import ChapterView from './components/ChapterView';
 import BookEditor from './components/BookEditor';
-import { Book, BookChapter, SubChapter } from './types';
+import PersonaManagement from './components/PersonaManagement';
+import { Book, BookChapter, SubChapter, WritingPersona } from './types';
 import { saveBook, loadBook } from './services/bookService';
 
 function App() {
-  const [currentStep, setCurrentStep] = useState<'prompt' | 'outline' | 'chapter' | 'edit'>('prompt');
+  const [currentStep, setCurrentStep] = useState<'prompt' | 'outline' | 'chapter' | 'edit' | 'personas'>('prompt');
   const [book, setBook] = useState<Book | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<BookChapter | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<WritingPersona | null>(null);
   
   // Handle OAuth callback
   useEffect(() => {
@@ -149,6 +151,7 @@ function App() {
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-4 lg:px-8">
             <div className="flex items-center justify-between">
+              {/* Left side - Navigation */}
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -156,17 +159,26 @@ function App() {
                 >
                   <Menu className="w-5 h-5 text-gray-600" />
                 </button>
-                <div className="flex items-center gap-4">
-                  <img 
-                    src="/generated-image.png" 
-                    alt="Unstack Logo" 
-                    className="h-10 w-auto"
-                  />
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Unstack</h1>
-                    <p className="text-gray-600 hidden sm:block">Create comprehensive eBooks with AI-powered research and generation</p>
-                  </div>
-                </div>
+
+                <button
+                  onClick={() => {
+                    console.log('Personas button clicked!');
+                    setCurrentStep('personas');
+                  }}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-sm ${
+                    currentStep === 'personas'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300'
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  <span>Writing Personas</span>
+                </button>
+              </div>
+
+              {/* Right side - empty for now, can add user menu later */}
+              <div className="flex items-center gap-2">
+                {/* Future: User menu, settings, etc. */}
               </div>
             </div>
           </header>
@@ -174,6 +186,7 @@ function App() {
           {/* Content */}
           <main className="flex-1 overflow-y-auto p-4 lg:p-8">
             <div className="max-w-6xl mx-auto">
+
               {currentStep === 'prompt' && (
                 <BookPrompt 
                   onBookGenerated={handleBookGenerated}
@@ -204,7 +217,7 @@ function App() {
               )}
 
               {currentStep === 'edit' && book && (
-                <BookEditor 
+                <BookEditor
                   book={book}
                   onBack={handleBackFromEdit}
                   onUpdateBook={(updatedBook) => {
@@ -212,6 +225,14 @@ function App() {
                     saveBookToDatabase(updatedBook);
                   }}
                   apiKeys={apiKeys}
+                />
+              )}
+
+              {currentStep === 'personas' && (
+                <PersonaManagement
+                  apiKeys={apiKeys}
+                  onPersonaSelect={setSelectedPersona}
+                  selectedPersonaId={selectedPersona?.id}
                 />
               )}
             </div>

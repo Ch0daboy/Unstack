@@ -27,6 +27,7 @@ const OutlineView: React.FC<OutlineViewProps> = ({
   const [showHeatLevelSelector, setShowHeatLevelSelector] = useState(false);
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [showCoverOptions, setShowCoverOptions] = useState(false);
+  const [showCoverModal, setShowCoverModal] = useState(false);
   const [selectedNewHeatLevel, setSelectedNewHeatLevel] = useState('');
   const [showAudiobookGenerator, setShowAudiobookGenerator] = useState(false);
 
@@ -136,7 +137,39 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       setShowCoverOptions(false);
     } catch (error) {
       console.error('Error generating cover:', error);
-      alert('Failed to generate cover. Please check your API key and try again.');
+
+      let errorMessage = 'Failed to generate cover.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('content policies') || error.message.includes('policy')) {
+          errorMessage = `Google AI rejected this image due to content policies.
+
+This can happen with fantasy themes (dragons, castles, etc.).
+
+Solutions:
+• Try a simpler prompt (e.g., "abstract book cover design")
+• Use DALL-E instead (click DALL-E button)
+• Modify the book genre or description
+
+Would you like to try DALL-E instead?`;
+
+          if (confirm(errorMessage)) {
+            // Automatically try DALL-E
+            setTimeout(() => handleGenerateCover(true), 100);
+            return;
+          }
+        } else if (error.message.includes('API key') || error.message.includes('access denied')) {
+          errorMessage = `API Key Issue: ${error.message}
+
+Your API key works for text but may need additional permissions for image generation.`;
+        } else {
+          errorMessage = `Cover generation failed: ${error.message}
+
+You can try DALL-E as an alternative.`;
+        }
+      }
+
+      alert(errorMessage);
     } finally {
       setIsGeneratingCover(false);
     }
@@ -162,25 +195,42 @@ const OutlineView: React.FC<OutlineViewProps> = ({
       {/* Header */}
       <div className="bg-white rounded-2xl shadow-xl p-6">
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-4">
+          <div className="flex items-start gap-6">
+            <div className="flex-shrink-0">
               {book.coverUrl ? (
-                <img 
-                  src={book.coverUrl} 
-                  alt={`${book.title} cover`}
-                  className="w-16 h-24 object-cover rounded-lg shadow-md"
-                />
+                <div className="relative group cursor-pointer" onClick={() => setShowCoverModal(true)}>
+                  <img
+                    src={book.coverUrl}
+                    alt={`${book.title} cover`}
+                    className="w-48 h-72 object-cover rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all duration-300 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 bg-white bg-opacity-90 rounded-full p-2 transition-opacity duration-300">
+                      <Search className="w-5 h-5 text-gray-700" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow-md">
+                    AI Generated
+                  </div>
+                  <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full">
+                    Click to enlarge
+                  </div>
+                </div>
               ) : (
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-white" />
+                <div className="w-48 h-72 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-gray-200">
+                  <div className="text-center text-white">
+                    <BookOpen className="w-16 h-16 mx-auto mb-2" />
+                    <p className="text-sm font-medium">No Cover Yet</p>
+                    <p className="text-xs opacity-80">Generate one below</p>
+                  </div>
                 </div>
               )}
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">{book.title}</h1>
-              <div className="space-y-1">
-                <p className="text-gray-600">{book.description}</p>
-                <div className="flex gap-4 text-sm text-gray-500">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">{book.title}</h1>
+              <div className="space-y-3">
+                <p className="text-gray-600 text-lg leading-relaxed">{book.description}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-500">
                   <span><strong>Genre:</strong> {book.genre}</span>
                   {book.subGenre && <span><strong>Sub-Genre:</strong> {book.subGenre}</span>}
                   <span><strong>Tone:</strong> {book.tone}</span>
@@ -248,10 +298,11 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                       <button
                         onClick={() => handleGenerateCover(false)}
                         disabled={isGeneratingCover}
+                        title="Generate book cover using Google AI (Vertex AI Imagen + Gemini fallback)"
                         className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         <Image className="w-4 h-4" />
-                        {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
+                        {isGeneratingCover ? 'Generating...' : 'Google AI'}
                       </button>
                       <button
                         onClick={() => handleGenerateCover(true)}
@@ -364,10 +415,11 @@ const OutlineView: React.FC<OutlineViewProps> = ({
                     <button
                       onClick={() => handleGenerateCover(false)}
                       disabled={isGeneratingCover}
+                      title="Generate book cover using Google AI (Vertex AI Imagen + Gemini fallback)"
                       className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                     >
                       <Image className="w-4 h-4" />
-                      {isGeneratingCover ? 'Generating...' : 'Gemini Imagen'}
+                      {isGeneratingCover ? 'Generating...' : 'Google AI'}
                     </button>
                     <button
                       onClick={() => handleGenerateCover(true)}
@@ -449,6 +501,54 @@ const OutlineView: React.FC<OutlineViewProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Cover Image Modal */}
+      {showCoverModal && book.coverUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" onClick={() => setShowCoverModal(false)}>
+          <div className="relative max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                onClick={() => setShowCoverModal(false)}
+                className="bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all duration-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <img
+                src={book.coverUrl}
+                alt={`${book.title} cover - Full Size`}
+                className="w-full h-auto max-h-[80vh] object-contain rounded-lg shadow-lg"
+              />
+              <div className="mt-4 text-center">
+                <h3 className="text-xl font-bold text-gray-800 mb-2">{book.title}</h3>
+                <p className="text-gray-600 mb-3">by {book.author || 'Author Name'}</p>
+                <div className="flex items-center justify-center gap-4 mb-3">
+                  <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    AI Generated Cover
+                  </div>
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = book.coverUrl!;
+                      link.download = `${book.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_cover.png`;
+                      link.click();
+                    }}
+                    className="inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm transition-colors duration-200"
+                  >
+                    <Download className="w-3 h-3" />
+                    Download
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">Click outside to close</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Audiobook Generator Modal */}
       {showAudiobookGenerator && (
