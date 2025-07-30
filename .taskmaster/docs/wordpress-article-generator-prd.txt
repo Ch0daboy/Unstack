@@ -1,0 +1,119 @@
+# WordPress Article Generator - Product Requirements Document
+
+## Overview
+A comprehensive feature that allows users to generate and publish articles to their WordPress blog automatically. The system analyzes existing content in a selected category, generates relevant topics, researches them, creates complete articles with featured images, and publishes directly to WordPress.
+
+## Problem Statement
+Content creators spend significant time researching topics, writing articles, creating images, and publishing to their WordPress blogs. This feature automates the entire process while maintaining quality and relevance to their existing content.
+
+## Goals
+- Automate the complete WordPress article creation and publishing workflow
+- Generate content that matches the style and topics of existing blog content
+- Reduce content creation time from hours to minutes
+- Maintain high-quality, SEO-friendly articles
+- Provide seamless WordPress integration
+
+## User Stories
+
+### Phase 1: WordPress Integration Foundation
+- As a user, I want to enter my WordPress site URL and credentials securely
+- As a user, I want to test my WordPress connection to ensure it works
+- As a user, I want to see a list of available categories from my WordPress site
+- As a user, I want to select a category to analyze for content generation
+
+### Phase 2: Content Analysis & Scraping
+- As a user, I want the system to scrape all articles from my selected category
+- As a user, I want the system to analyze the writing style, topics, and tone of existing articles
+- As a user, I want the system to generate relevant topic suggestions based on the analysis
+- As a user, I want the system to research the selected topic thoroughly
+
+### Phase 3: Content Generation
+- As a user, I want the system to generate a complete article based on the research
+- As a user, I want the system to create a relevant featured image for the article
+- As a user, I want to preview the generated article before publishing
+- As a user, I want to edit the article if needed
+
+### Phase 4: Publishing & Workflow
+- As a user, I want the system to publish the article directly to my WordPress site
+- As a user, I want to see progress indicators for each step of the process
+- As a user, I want to handle errors gracefully with retry options
+- As a user, I want to receive confirmation when the article is published
+
+## Technical Requirements
+
+### WordPress Integration
+- WordPress REST API v2 integration for authentication and publishing
+- Secure credential storage using Supabase
+- Support for both username/password and application password authentication
+- Category listing and article retrieval
+- Article publishing with proper formatting
+
+### Content Analysis
+- Web scraping service to extract article content from WordPress sites
+- Content analysis using Gemini AI to understand:
+  - Writing style and tone
+  - Common topics and themes
+  - Article structure and length
+  - SEO patterns and keywords
+- Topic generation based on content gaps and trends
+
+### Content Generation
+- Article generation using Gemini AI with context from existing content
+- Featured image generation using existing cover service
+- Content optimization for SEO and readability
+- Proper HTML formatting for WordPress
+
+### Security & Performance
+- Secure storage of WordPress credentials
+- Rate limiting for API calls and scraping
+- Error handling and retry logic
+- Progress tracking and user feedback
+
+## Implementation Phases
+
+### Phase 1: Foundation (Tasks 1-5)
+1. Add "WordPress Article Generator" to genre list
+2. Create WordPress credentials management service
+3. Create WordPress API service for authentication
+4. Create WordPress category listing service
+5. Create WordPress connection testing component
+
+### Phase 2: Analysis (Tasks 6-10)
+6. Create web scraping service for WordPress articles
+7. Create content analysis service using Gemini
+8. Create topic generation service
+9. Integrate research service for topic investigation
+10. Create category analysis workflow
+
+### Phase 3: Generation (Tasks 11-14)
+11. Create WordPress article generation service
+12. Extend image generation for WordPress articles
+13. Create content formatting and optimization service
+14. Create article preview component
+
+### Phase 4: Publishing (Tasks 15-18)
+15. Create WordPress publishing service
+16. Create complete workflow orchestration service
+17. Implement progress tracking and error handling
+18. Create publishing confirmation component
+
+### Phase 5: UI/UX & Testing (Tasks 19-22)
+19. Create WordPress integration UI components
+20. Create workflow management interface
+21. Implement Playwright tests for all components
+22. Add comprehensive error handling and user feedback
+
+## Success Metrics
+- Successful WordPress authentication and connection
+- Accurate content analysis and topic generation
+- High-quality article generation matching existing style
+- Successful article publishing to WordPress
+- User satisfaction with the automated workflow
+- Reduced time from topic selection to published article
+
+## Dependencies
+- Existing Gemini service for AI content generation
+- Existing cover service for image generation
+- Supabase for secure credential storage
+- React/TypeScript frontend framework
+- WordPress REST API v2 

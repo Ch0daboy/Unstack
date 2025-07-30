@@ -141,5 +141,13 @@
       "updated": "2025-07-26T10:03:37.452Z",
       "description": "Tasks for master context"
     }
+  },
+  "wordpress-article-generator": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-07-30T20:22:54.851Z",
+      "updated": "2025-07-30T20:22:54.851Z",
+      "description": "WordPress Article Generation and Publishing Feature"
+    }
   }
 }
